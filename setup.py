@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="streamlit-authenticator",
+    name="streamlit-authenticator-external-api",
     version="0.3.1",
-    author="Mohammad Khorasani",
-    author_email="khorasani.mohammad@gmail.com",
+    author="Kawsar Noor",
+    author_email="robienoor@hotmail.co.uk",
     description="A secure authentication module to validate user credentials in a Streamlit application.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mkhorasani/Streamlit-Authenticator",
+    url="https://github.com/kawsarnoor/Streamlit-Authenticator",
     packages=setuptools.find_packages(),
     include_package_data=True,
     classifiers=[

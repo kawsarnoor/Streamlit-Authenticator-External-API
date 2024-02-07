@@ -4,6 +4,7 @@ import streamlit as st
 from typing import Optional
 from datetime import datetime, timedelta
 import extra_streamlit_components as stx
+import requests
 
 from .hasher import Hasher
 from .validator import Validator
@@ -16,7 +17,8 @@ class Authenticate:
     forgot username, and modify user details widgets.
     """
     def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float=30.0, 
-        preauthorized: Optional[list]=None, validator: Optional[Validator]=None):
+        preauthorized: Optional[list]=None, validator: Optional[Validator]=None, authentication_endpoint: Optional[str]=None):
+        
         """
         Create a new instance of "Authenticate".
 
@@ -35,6 +37,7 @@ class Authenticate:
         validator: Validator
             A Validator object that checks the validity of the username, name, and email fields.
         """
+
         self.credentials                =   credentials
         self.credentials['usernames']   =   {key.lower(): value for key, value in credentials['usernames'].items()}
         self.cookie_name                =   cookie_name
@@ -43,6 +46,7 @@ class Authenticate:
         self.preauthorized              =   preauthorized
         self.cookie_manager             =   stx.CookieManager()
         self.validator                  =   validator if validator is not None else Validator()
+        self.authentication_endpoint    =   authentication_endpoint
 
         for username, _ in self.credentials['usernames'].items():
             if 'logged_in' not in self.credentials['usernames'][username]:
@@ -107,8 +111,36 @@ class Authenticate:
         bool
             The validity of the entered password by comparing it to the hashed password on disk.
         """
+
+        if self.authentication_endpoint is not None:
+            return self._check_pw_external_api()
+
         return bcrypt.checkpw(self.password.encode(), 
             self.credentials['usernames'][self.username]['password'].encode())
+
+    
+    def _check_pw_external_api(self) -> bool:
+
+        try:
+            response = requests.post(self.authentication_endpoint, auth=(self.username, self.password))
+
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                return True
+            else:
+                return False
+        except:
+            return False
+        """
+        Checks validity of the entered password via an external API
+
+        Returns
+        -------
+        bool
+            The validity of the entered password by seeing return status of external API
+        
+        """
+
 
     def _check_cookie(self):
         """
