@@ -15,3 +15,35 @@ python setup.py install
 ```
 
 
+# Useage
+
+The external API needs to have the same usernames as those in the `config.yaml` file.
+
+```
+import streamlit_authenticator_external_api as stauth
+
+external_api_endpoint = "http://my_external_api_url:xxxx"
+
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['preauthorized'],
+    authentication_endpoint=external_api_endpoint
+)
+
+authenticator.login()
+if st.session_state["authentication_status"]:
+    authenticator.logout()
+    st.write(f'Welcome *{st.session_state["name"]}*')
+    st.title('Some content')
+elif st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
+elif st.session_state["authentication_status"] is None:
+    st.warning('Please enter your username and password')
+```
+ 
