@@ -5,22 +5,28 @@ A slight tweak of the fantastic upstream version provided [here](https://github.
 # Installation
 
 ```
-git clone https://github.com/kawsarnoor/Streamlit-Authenticator
+pip install git+https://github.com/kawsarnoor/Streamlit-Authenticator-External-API 
 ```
 
-then `cd` into the cloned repo and run
+# Dependencies
+
+You will need `streamlit` and `pyyaml`
 
 ```
-python setup.py install
+pip install streamlit
+pip install pyyaml
 ```
-
 
 # Useage
 
 The external API needs to have the same usernames as those in the `config.yaml` file.
 
 ```
+import streamlit as st
 import streamlit_authenticator_external_api as stauth
+import yaml
+from yaml import SafeLoader
+
 
 external_api_endpoint = "http://my_external_api_url:xxxx"
 

@@ -17,7 +17,8 @@ class Authenticate:
     forgot username, and modify user details widgets.
     """
     def __init__(self, credentials: dict, cookie_name: str, key: str, cookie_expiry_days: float=30.0, 
-        preauthorized: Optional[list]=None, validator: Optional[Validator]=None, authentication_endpoint: Optional[str]=None):
+        preauthorized: Optional[list]=None, validator: Optional[Validator]=None, 
+        authentication_endpoint: Optional[str]=None):
         
         """
         Create a new instance of "Authenticate".
@@ -58,8 +59,8 @@ class Authenticate:
             st.session_state['name'] = None
         if 'authentication_status' not in st.session_state:
             st.session_state['authentication_status'] = None
-        if 'jwt' not in st.session_state:
-            st.session_state['jwt'] = None
+        if 'external_api_jwt' not in st.session_state:
+            st.session_state['external_api_jwt'] = None
         if 'username' not in st.session_state:
             st.session_state['username'] = None
         if 'logout' not in st.session_state:
@@ -76,8 +77,11 @@ class Authenticate:
         str
             The JWT cookie for passwordless reauthentication.
         """
-        return jwt.encode({'username': st.session_state['username'],
-            'exp_date': self.exp_date}, self.key, algorithm='HS256')
+        return jwt.encode({'username': st.session_state['username'], 
+                           'external_api_jwt': st.session_state['external_api_jwt'],
+                           'exp_date': self.exp_date}, 
+                           self.key, 
+                           algorithm='HS256')
 
     def _token_decode(self) -> str:
         """
@@ -122,6 +126,15 @@ class Authenticate:
 
     
     def _check_pw_external_api(self) -> bool:
+        """
+        Checks validity of the entered password via an external API
+
+        Returns
+        -------
+        bool
+            The validity of the entered password by seeing return status of external API
+        
+        """
 
         try:
             response = requests.post(self.authentication_endpoint, auth=(self.username, self.password))
@@ -133,15 +146,7 @@ class Authenticate:
                 return False, None
         except:
             return False, None
-        """
-        Checks validity of the entered password via an external API
 
-        Returns
-        -------
-        bool
-            The validity of the entered password by seeing return status of external API
-        
-        """
 
 
     def _check_cookie(self):
@@ -158,6 +163,7 @@ class Authenticate:
                             st.session_state['username'] = self.token['username']
                             st.session_state['name'] = self.credentials['usernames'][self.token['username']]['name']
                             st.session_state['authentication_status'] = True
+                            st.session_state['external_api_jwt'] = self.token['external_api_jwt']
                             self.credentials['usernames'][self.token['username']]['logged_in'] = True
     
     def _record_failed_login_attempts(self, reset: bool=False):
@@ -201,12 +207,12 @@ class Authenticate:
                 if password_correct:
                     if inplace:
                         st.session_state['name'] = self.credentials['usernames'][self.username]['name']
+                        st.session_state['external_api_jwt'] = external_api_jwt
                         self.exp_date = self._set_exp_date()
                         self.token = self._token_encode()
                         self.cookie_manager.set(self.cookie_name, self.token,
                             expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
                         st.session_state['authentication_status'] = True
-                        st.session_state['jwt'] = external_api_jwt
                     else:
                         return True
                     self._record_failed_login_attempts(reset=True)
