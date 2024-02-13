@@ -58,6 +58,8 @@ class Authenticate:
             st.session_state['name'] = None
         if 'authentication_status' not in st.session_state:
             st.session_state['authentication_status'] = None
+        if 'jwt' not in st.session_state:
+            st.session_state['jwt'] = None
         if 'username' not in st.session_state:
             st.session_state['username'] = None
         if 'logout' not in st.session_state:
@@ -126,11 +128,11 @@ class Authenticate:
 
             # Check if the request was successful (status code 200)
             if response.status_code == 200:
-                return True
+                return True, response.json()['token']
             else:
-                return False
+                return False, None
         except:
-            return False
+            return False, None
         """
         Checks validity of the entered password via an external API
 
@@ -195,7 +197,8 @@ class Authenticate:
                 raise(LoginError('Maximum number of concurrent users exceeded'))
         if self.username in self.credentials['usernames']:
             try:
-                if self._check_pw():
+                password_correct, external_api_jwt = self._check_pw()
+                if password_correct:
                     if inplace:
                         st.session_state['name'] = self.credentials['usernames'][self.username]['name']
                         self.exp_date = self._set_exp_date()
@@ -203,6 +206,7 @@ class Authenticate:
                         self.cookie_manager.set(self.cookie_name, self.token,
                             expires_at=datetime.now() + timedelta(days=self.cookie_expiry_days))
                         st.session_state['authentication_status'] = True
+                        st.session_state['jwt'] = external_api_jwt
                     else:
                         return True
                     self._record_failed_login_attempts(reset=True)
@@ -299,6 +303,7 @@ class Authenticate:
         st.session_state['name'] = None
         st.session_state['username'] = None
         st.session_state['authentication_status'] = None
+        st.session_state['jwt'] = None
 
     def logout(self, button_name: str='Logout', location: str='main', key: Optional[str]=None):
         """
