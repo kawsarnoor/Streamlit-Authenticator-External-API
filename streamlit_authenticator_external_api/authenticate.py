@@ -137,7 +137,14 @@ class Authenticate:
         """
 
         try:
-            response = requests.post(self.authentication_endpoint, auth=(self.username, self.password))
+            proxies = {
+            "http": None,
+            "https":None,
+            }
+
+            response = requests.post(self.authentication_endpoint, 
+                                     auth=(self.username, self.password),
+                                     proxies=proxies)
 
             # Check if the request was successful (status code 200)
             if response.status_code == 200:
